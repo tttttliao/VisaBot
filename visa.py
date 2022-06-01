@@ -20,10 +20,15 @@ accountSid = 'ssid'
 authToken = 'authtoken'
 client = Client(accountSid, authToken)
 
+firefox_profile = "firefox profile"
 url = 'https://my.uscis.gov/appointmentscheduler-appointment/ca/en/office-search'
-os.environ['GH_TOKEN'] = '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'
+ircc_number = -1
+os.environ['GH_TOKEN'] = 'GitHub Token'
+zipcode = ""
 
-yag = yagmail.SMTP('visa.appointment.alerts@gmail.com', 'lyw19990406')
+# Yagmail config
+yag = yagmail.SMTP('alert email', 'alert email password')
+destination_emails = ['email1', 'email2']
 
 
 def timeSleep(x, driver):
@@ -42,8 +47,7 @@ def createDriver():
     """Creating driver."""
     options = Options()
     options.headless = True  # Change To False if you want to see Firefox Browser Again.
-    profile = webdriver.FirefoxProfile(
-        r'/Users/tonyliao/Library/Application Support/Firefox/Profiles/1w7hqnpk.default-release')
+    profile = webdriver.FirefoxProfile(firefox_profile)
     driver = webdriver.Firefox(profile, options=options, executable_path=GeckoDriverManager().install())
     return driver
 
@@ -95,7 +99,7 @@ def finding_visa_spots(driver, alert_only=True):
                                        {'class': 'uscis-input'})
             if zip_code_input:
                 # Clicking Find Offices.
-                driver.find_element(By.ID, "zip-input").send_keys('98121')
+                driver.find_element(By.ID, "zip-input").send_keys(zipcode)
                 driver.find_element(by=By.NAME, value="get-offices").click()
 
                 # Checking if item is still in cart.
@@ -126,11 +130,11 @@ def finding_visa_spots(driver, alert_only=True):
                             available_times_str += t.text
                             available_times_str += ", "
                         contents = [
-                            "This is an automated alert that a visa appointment in Seattle has opened up",
+                            "This is an automated alert that a visa appointment has opened up",
                             available_date, " ", available_times_str,
                         ]
-                        yag.send('jiang.xiao@dhs.sg', 'Canada Visa Appointment In Seattle Has Opened Up', contents)
-                        yag.send('tonyliao0406@gmail.com', 'Canada Visa Appointment In Seattle Has Opened Up', contents)
+                        for email in destination_emails:
+                            yag.send(email, 'Canada Visa Appointment Has Opened Up', contents)
                         exit(0)
                     else:
                         driver.find_element(By.CLASS_NAME, "available-time-slot").click()
@@ -143,7 +147,7 @@ def finding_visa_spots(driver, alert_only=True):
                 try:
                     print("\nAttempting IRCC Number.\n")
                     ircc = driver.find_element(By.TAG_NAME, "input")
-                    ircc.send_keys(4811266351835)
+                    ircc.send_keys(ircc_number)
                     driver.find_element(By.ID, 'to-review').click()
                 except (NoSuchElementException, TimeoutException):
                     print("IRCC Not Found")
